@@ -1,0 +1,124 @@
+
+
+library(pdftools)
+library(tidyverse)
+
+setwd("~/Downloads")
+dmid<-pdf_text("DMID_140100_Subtyping_IgG1_raw data.pdf")%>%
+        readr::read_lines()
+#write.table(dmid, "~/Downloads/mydata.txt", sep="\t")
+
+Plate.1<-dmid[44:52]
+Plate.2<-dmid[194:202]
+Plate.3<-dmid[344:352]
+Plate.4<-dmid[494:502]
+Plate.5<-dmid[644:652]
+Plate.6<-dmid[794:802]
+Plate.7<-dmid[1044:1052]
+Plate.8<-dmid[1194:1202]
+Plate.9<-dmid[1344:1352]
+Plate.10<-dmid[1494:1502]
+Plate.11<-dmid[1644:1652]
+Plate.12<-dmid[1893:1901]
+Plate.13<-dmid[2043:2051]
+Plate.14<-dmid[2193:2201]
+Plate.15<-dmid[2343:2351]
+Plate.16<-dmid[2493:2501]
+
+df.list<-list(Plate.1,Plate.2,Plate.3,Plate.4, Plate.5,Plate.6, Plate.7,Plate.8, Plate.9,
+              Plate.10, Plate.11,Plate.12, Plate.13,Plate.14, Plate.15,Plate.16)
+
+pres<-lapply(df.list,function(Plate.i){
+        P.i<-Plate.i[1:9]%>%
+                str_squish()%>%
+                strsplit(split=" ")
+        var_lines<-P.i[1]%>%
+                unlist()
+        stats_lines<-P.i[2:9]
+        stats_df<-plyr::ldply(stats_lines)
+        colnames(stats_df)<-c("0",var_lines)
+        final_dp.i<-as_tibble(stats_df)
+        fp.i<-select(final_dp.i, -1)
+        
+fp.i %<>% mutate_if(is.character,as.numeric)
+        afp.i<-do.call(rbind,
+                      lapply(seq(1, nrow(fp.i), 2), function(i){
+                              x <- fp.i[ i:(i + 1), , drop = FALSE]
+                              res <- rbind(x, colSums(x)/2)
+                      }))
+        c1.i<-afp.i[3,1]
+        c2.i<-afp.i[6,1]
+        pc.i<-afp.i[9,1]
+        nc.i<-afp.i[12,1]
+        qc.i<-c(c1.i,c2.i,pc.i,nc.i)
+        sc.i<-afp.i[3,c(2:12)]
+        sa.i<-afp.i[c(6,9,12),c(2:12)]
+        my_list<-list(qc.i,sc.i,sa.i)
+        return(my_list)
+})
+ 
+
+#All the standard curves
+SC<-sapply(pres, "[[", 2)
+
+#All the controls
+CON<-sapply(pres, "[[", 1)
+
+#All the samples
+Sample<-sapply(pres, "[[", 3)
+
+#install.packages("drc")
+#Four parameter curve
+library(drc)
+       
+conc<-c(1000,500,250,125,62.5,	
+        31.25,15.625,7.8125,3.90625,1.953125,0.9765625)
+
+sc <- data.frame(matrix(unlist(SC), nrow=length(SC), byrow=F))
+conce<-rep(conc,16)
+
+finaldata<-cbind(sc,conce)
+colnames(finaldata)<-c("OD","AU")
+
+dmidm<-drm(OD~AU,data = finaldata,fct = LL.4(names=c("Slope", "Lower", "Upper", "ED50")))
+summary(dmidm)
+
+
+
+write.table(finaldata, "~/Downloads/mydata.txt", sep="\t")
+write.csv(finaldata,'mydata.csv')
+write.csv(CON,'mydata.csv')
+
+
+###Singe function
+P.1<-Plate.1[1:9]%>%
+        str_squish()%>%
+        strsplit(split=" ")
+
+var_lines<-P.1[1]%>%
+        unlist()
+
+stats_lines<-P.1[2:9]
+stats_df<-plyr::ldply(stats_lines)
+colnames(stats_df)<-c("0",var_lines)
+final_dp.1<-as_tibble(stats_df)
+
+fp1<-select(final_dp.1, -1)
+library(magrittr)
+fp1 %<>% mutate_if(is.character,as.numeric)
+
+afp1<-do.call(rbind,
+        lapply(seq(1, nrow(fp1), 2), function(i){
+                x <- fp1[ i:(i + 1), , drop = FALSE]
+                res <- rbind(x, colSums(x)/2)
+                res
+        }))
+
+c11<-afp1[3,1]
+c12<-afp1[6,1]
+P1<-afp1[9,1]
+N1<-afp1[12,1]
+
+QC1<-c(c11,c12,P1,N1)
+sc1<-afp1[3,c(2:12)]
+sa1<-afp1[c(6,9,12),c(2:12)]
