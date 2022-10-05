@@ -1,0 +1,103 @@
+library(pdftools)
+library(tidyverse)
+
+setwd("C:/Users/rachelli/Box/(Shared) Vaccine/Protocols/Animal/Mouse Hookworm Studies/304-TCH-CVD-GST-ANI-PRL/Raw data")
+
+prl304<-pdf_text("304-TCH-CVD-GST-ANI-PRL_Na-GST-1_IgG_LCH_Plates 1 to 7_GSCC_03172022_.pdf")%>%
+  readr::read_lines()
+
+row_odd <-c( 1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	
+             1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,
+             1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,	1,	0,  1,  0)
+footer_rows2 <- grep("3/17/2022 2:16:09 PM", prl304)
+prl304<- prl304[-(footer_rows2-1)] #delete blank lines
+
+footer_rows <- grep("Printed by: Rachel Li", prl304) 
+prl304<- prl304[-(footer_rows+1)] #delete blank lines
+
+
+footer_rows3 <- grep("3/17/2022 2:16:09 PM", prl304)
+prl304<- prl304[-(footer_rows3)]
+
+footer_rows4 <- grep("Printed by: Rachel Li", prl304)
+prl304<- prl304[-(footer_rows4)]
+
+
+
+table_start <- stringr::str_which(prl304, "Group")
+table_end <- stringr::str_which(prl304, "Gr33")
+
+Plate.1<-prl304[c((table_start[1]+2):(table_end[1]+1))]
+Plate.2<-prl304[c((table_start[2]+2):(table_end[2]+1))]
+Plate.3<-prl304[c((table_start[3]+2):(table_end[3]+1))]
+Plate.4<-prl304[c((table_start[4]+2):(table_end[4]+1))]
+Plate.5<-prl304[c((table_start[5]+2):(table_end[5]+1))]
+
+Plate.6<-prl304[c((table_start[6]+2):(table_end[6]+1))]
+Plate.7<-prl304[c((table_start[7]+2):(table_end[7]+1))]
+
+p1<-Plate.1[row_odd == 1]%>%
+  str_squish()%>%  #reduces the repeated whitespace between each string
+  str_replace("R", "")%>%
+  strsplit(split = " ") # split the elements of each string into substrings
+p1<-lapply(p1, function(z){ z[!is.na(z) & z != ""]})
+Plate.1_df<-plyr::ldply(p1) 
+p1f<-Plate.1_df[,c(10,11)]
+
+p2<-Plate.2[row_odd == 1]%>%
+  str_squish()%>%  #reduces the repeated whitespace between each string
+  str_replace("R", "")%>%
+  strsplit(split = " ") # split the elements of each string into substrings
+p2<-lapply(p2, function(z){ z[!is.na(z) & z != ""]})
+Plate.2_df<-plyr::ldply(p2) 
+p2f<-Plate.2_df[,c(10,11)]
+
+p3<-Plate.3[row_odd == 1]%>%
+  str_squish()%>%  #reduces the repeated whitespace between each string
+  str_replace("R", "")%>%
+  strsplit(split = " ") # split the elements of each string into substrings
+p3<-lapply(p3, function(z){ z[!is.na(z) & z != ""]})
+Plate.3_df<-plyr::ldply(p3) 
+p3f<-Plate.3_df[,c(10,11)]
+
+p4<-Plate.4[row_odd == 1]%>%
+  str_squish()%>%  #reduces the repeated whitespace between each string
+  str_replace("R", "")%>%
+  strsplit(split = " ") # split the elements of each string into substrings
+p4<-lapply(p4, function(z){ z[!is.na(z) & z != ""]})
+Plate.4_df<-plyr::ldply(p4) 
+p4f<-Plate.4_df[,c(10,11)]
+
+p5<-Plate.5[row_odd == 1]%>%
+  str_squish()%>%  #reduces the repeated whitespace between each string
+  str_replace("R", "")%>%
+  strsplit(split = " ") # split the elements of each string into substrings
+p5<-lapply(p5, function(z){ z[!is.na(z) & z != ""]})
+Plate.5_df<-plyr::ldply(p5) 
+p5f<-Plate.5_df[,c(10,11)]
+
+p6<-Plate.6[row_odd == 1]%>%
+  str_squish()%>%  #reduces the repeated whitespace between each string
+  str_replace("R", "")%>%
+  strsplit(split = " ") # split the elements of each string into substrings
+p6<-lapply(p6, function(z){ z[!is.na(z) & z != ""]})
+Plate.6_df<-plyr::ldply(p6) 
+p6f<-Plate.6_df[,c(10,11)]
+
+p7<-Plate.7[row_odd == 1]%>%
+  str_squish()%>%  #reduces the repeated whitespace between each string
+  str_replace("R", "")%>%
+  strsplit(split = " ") # split the elements of each string into substrings
+p7<-lapply(p7, function(z){ z[!is.na(z) & z != ""]})
+Plate.7_df<-plyr::ldply(p7) 
+p7f<-Plate.7_df[,c(10,11)]
+
+final<-p1f%>%
+  add_row(p2f)%>%
+  add_row(p3f)%>%
+  add_row(p4f)%>%
+  add_row(p5f)%>%
+  add_row(p6f)%>%
+  add_row(p7f)
+
+write.csv(final,'mydata.csv')
