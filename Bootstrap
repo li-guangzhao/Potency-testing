@@ -1,0 +1,84 @@
+boot1<-boot[which(boot$Lot == 1),]
+AllDays<-unique(boot1$Time)
+for (i in 1:16){
+  Day.i<-AllDays[i]
+  boot1.i<-boot1[boot1$Time==Day.i,]
+  result1.i<- boot(data=boot1.i, statistic=slope, R=10000, formula=Res ~ lDose)
+  final.i<-boot.ci(result1.i,0.99,type = "basic")
+  print(paste( c(final.i$t0, final.i$basic[c(4,5)])))
+}
+
+for (i in 1:16){
+  Day.i<-AllDays[i]
+  boot1.i<-boot1[boot1$Time<=Day.i,]
+  result1.i<- boot(data=boot1.i, statistic=slope, R=10000, formula=Res ~ lDose)
+  final.i<-boot.ci(result1.i,0.99,type = "basic")
+  print(paste(c(final.i$t0, final.i$basic[c(4,5)])))
+}
+
+boot2<-boot[which(boot$Lot == 2),]
+AllDays2<-unique(boot2$Time)
+
+for (i in 1:8){
+  Day.i<-AllDays2[i]
+  boot2.i<-boot2[boot2$Time==Day.i,]
+  result2.i<- boot(data=boot2.i, statistic=slope, R=10000, formula=Res ~ lDose)
+  final.i<-boot.ci(result2.i,0.99,type = "basic")
+  print(paste(c(final.i$t0, final.i$basic[c(4,5)])))
+}
+for (i in 1:8){
+  Day.i<-AllDays2[i]
+  boot2.i<-boot2[boot2$Time<=Day.i,]
+  result2.i<- boot(data=boot2.i, statistic=slope, R=10000, formula=Res ~ lDose)
+  final.i<-boot.ci(result2.i,0.99,type = "basic")
+  print(paste(c(final.i$t0, final.i$basic[c(4,5)])))
+}
+df<-read.csv(file="lot1.csv",head=TRUE,sep=",")
+View(df)
+df$Group<-factor(df$Group)
+df$month<-factor(df$month)
+dodge <- position_dodge(width=0.5)
+p1<-ggplot(df, aes(x=month, y=mean, fill=Group)) +
+  geom_crossbar(aes(ymin = lower, ymax = upper), position =  dodge,width = 0.5)+
+  labs(x="Month",y="Stability Slope (95% CIs)") +
+  ggtitle("Lot 1")+
+  theme(axis.text.x=element_text(face="bold",size=12),
+        axis.text.y=element_text(face="bold",size=12),
+        axis.title=element_text(size=16,face="bold"),
+        plot.title = element_text(size = 18, face = "bold"), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black",size=1))+
+scale_fill_brewer(palette="Dark2")
+
+ggplot(df, aes(x=mean, y=month, color=Group))+
+  geom_pointrange(aes(xmin = lower, xmax = upper), 
+                  position =  dodge)+
+  labs(x="Month",y="Stability Slope (95% CIs)") + 
+  scale_x_discrete(breaks=c("-15","-20"),
+  labels=c("-15", "-20"))+
+  ggtitle("Lot 1")+
+  theme(axis.text.x=element_text(face="bold",size=12),
+        axis.text.y=element_text(face="bold",size=12),
+        axis.title=element_text(size=16,face="bold"),
+        plot.title = element_text(size = 18, face = "bold"), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black",size=1))+
+  scale_fill_brewer(palette="Dark2")
+
+df2<-read.csv(file="lot2.csv",head=TRUE,sep=",")
+
+df2$Group<-factor(df2$Group)
+df2$month<-factor(df2$month)
+p2<-ggplot(df2, aes(x=month, y=mean, fill=Group)) + 
+  geom_crossbar(aes(ymin = lower, ymax = upper), position =  dodge,width = 0.5)+
+  labs(x="Month",y="Stability Slope (95% CIs)")+
+  ggtitle("Lot 2")+
+  theme(axis.text.x=element_text(face="bold",size=12),
+        axis.text.y=element_text(face="bold",size=12),
+        axis.title=element_text(size=16,face="bold"),
+        plot.title = element_text(size = 18, face = "bold"), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black",size=1))+
+scale_fill_brewer(palette="Dark2")
